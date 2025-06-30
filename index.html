@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Auto-Like My Facebook Posts</title>
+</head>
+<body>
+  <h2>Facebook Auto-Liker</h2>
+
+  <fb:login-button scope="public_profile,user_posts,pages_read_engagement,pages_manage_posts,publish_actions" onlogin="checkLoginState();">
+  </fb:login-button>
+
+  <p id="status"></p>
+  <button onclick="likeMyPosts()">Auto-Like Last 5 Posts</button>
+
+  <script>
+    let userToken = '';
+
+    window.fbAsyncInit = function () {
+      FB.init({
+        appId: '1506050634141884', // Replace with your Facebook App ID
+        cookie: true,
+        xfbml: true,
+        version: 'v19.0'
+      });
+
+      FB.AppEvents.logPageView();
+    };
+
+    function checkLoginState() {
+      FB.getLoginStatus(function (response) {
+        if (response.status === 'connected') {
+          userToken = response.authResponse.accessToken;
+          document.getElementById('status').innerText = '✅ Logged in!';
+        } else {
+          document.getElementById('status').innerText = '❌ Not logged in.';
+        }
+      });
+    }
+
+    async function likeMyPosts() {
+      if (!userToken) return alert("You must log in first!");
+
+      const res = await fetch(`https://graph.facebook.com/me/posts?access_token=${userToken}`);
+      const data = await res.json();
+
+      if (!data.data || data.data.length === 0) {
+        alert("No posts found.");
+        return;
+      }
+
+      for (let post of data.data.slice(0, 5)) {
+        await fetch(`https://graph.facebook.com/${post.id}/likes?access_token=${userToken}`, { method: 'POST' });
+      }
+
+      alert("✅ Liked your last 5 posts!");
+    }
+
+    // Load Facebook SDK
+    (function (d, s, id) {
+      let js, fjs = d.getElementsByTagName(s)[0];
+      if (d.getElementById(id)) return;
+      js = d.createElement(s); js.id = id;
+      js.src = "https://connect.facebook.net/en_US/sdk.js";
+      fjs.parentNode.insertBefore(js, fjs);
+    }(document, 'script', 'facebook-jssdk'));
+  </script>
+</body>
+</html>
